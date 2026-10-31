@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#070b14">
+<meta name="theme-color" content="#05070d">
 <title>CLaaS — The Spot Market for GPU Compute</title>
-<meta name="description" content="CLaaS is a live spot market for GPU-hours. Providers list idle capacity, AI teams bid for compute, and a central limit order book matches them in real time.">
+<meta name="description" content="CLaaS is a live spot market for GPU-hours. Providers list idle capacity, AI teams bid for compute, and a central limit order book matches them in real time. Free interactive demo — no signup.">
 <meta property="og:title" content="CLaaS — The Spot Market for GPU Compute">
 <meta property="og:description" content="Buy and sell GPU-hours on a live order book. Transparent prices, instant fills, no contracts. Free simulated demo.">
 <meta property="og:type" content="website">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234d7cff'/%3E%3Cpath d='M17.5 4 8 18h6l-1.5 10L22 14h-6z' fill='white'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%236ea8ff'/%3E%3Cpath d='M17.5 4 8 18h6l-1.5 10L22 14h-6z' fill='white'/%3E%3C/svg%3E">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"CLaaS","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"A live spot market for GPU compute hours with a central limit order book.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
 </script>
@@ -18,32 +18,31 @@
 </head>
 <body>
 
-<a class="skip" href="#main">Skip to market</a>
+<a class="skip" href="#main">Skip to the market</a>
 
-<!-- ======================= TOP NAVIGATION ======================= -->
+<!-- ======================= NAV ======================= -->
 <header class="nav">
   <div class="container nav-inner">
     <a class="brand" href="/" aria-label="CLaaS home">
-      <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="7" fill="#4d7cff"/><path d="M17.5 4 8 18h6l-1.5 10L22 14h-6z" fill="#fff"/></svg>
+      <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#6ea8ff"/><path d="M17.5 4 8 18h6l-1.5 10L22 14h-6z" fill="#fff"/></svg>
       <span>CLaaS</span>
     </a>
 
-    <nav class="nav-links" aria-label="Primary navigation">
+    <nav class="nav-links" aria-label="Primary">
       <a href="#market">Market</a>
       <a href="#trade">Trade</a>
       <a href="#how">How it works</a>
       <a href="#faq">FAQ</a>
-      <a href="/docs" target="_blank" rel="noopener">API docs ↗</a>
+      <a href="/docs" target="_blank" rel="noopener">API&nbsp;↗</a>
     </nav>
 
     <div class="nav-status">
-      <div class="nav-price mono" id="navPrice" aria-label="Current spot price">
-        <span id="navSpot">$0.00</span>
-        <span class="nav-delta" id="navDelta">+0.00%</span>
-      </div>
-      <span class="chip mono" id="simClock" title="Simulated market time: 1 trading day = 3 real minutes">00:00</span>
-      <span class="pill" id="connPill"><span class="dot"></span><span id="connText">LIVE · SIMULATED</span></span>
-      <button class="burger" id="burger" aria-expanded="false" aria-controls="mobileMenu" aria-label="Toggle navigation menu">
+      <span class="nav-price mono" id="navPrice" aria-label="Current spot price">
+        <span id="navSpot">$—</span><span class="nav-delta" id="navDelta">—</span>
+      </span>
+      <span class="chip mono" id="simClock" title="Simulated market time — one trading day = 3 real minutes">--:--</span>
+      <span class="pill live" id="connPill"><span class="dot"></span><span id="connText">LIVE&nbsp;·&nbsp;SIMULATED</span></span>
+      <button class="burger" id="burger" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
         <span></span><span></span>
       </button>
     </div>
@@ -59,60 +58,69 @@
 
 <main id="main">
 
-<!-- ======================= HERO SECTION ======================= -->
+<!-- ======================= HERO ======================= -->
 <section class="hero">
   <div class="container hero-grid">
-    <div class="hero-copy">
-      <h1>The spot market for GPU compute.</h1>
+    <div class="hero-copy reveal">
+      <p class="eyebrow">Compute-Liquidity-as-a-Service</p>
+      <h1>The spot market for <span class="grad">GPU compute.</span></h1>
       <p class="lede">
-        Providers list idle GPU capacity. AI teams bid for the hours they need.
-        A continuous central limit order book matches them in real time with
-        transparent clearing prices, partial fills, and zero contracts.
+        Providers list idle GPUs. AI teams bid for the hours they need. A live
+        order book sets the price — transparent fills, partial quantities,
+        zero contracts.
       </p>
       <div class="hero-ctas">
-        <a class="btn btn-primary" href="#trade">Buy compute <span class="arr" aria-hidden="true">→</span></a>
-        <a class="btn btn-outline" href="#trade">Sell compute <span class="arr" aria-hidden="true">→</span></a>
+        <a class="btn btn-primary" href="#trade">Buy compute <span class="arr">→</span></a>
+        <a class="btn btn-outline sell" href="#trade">Sell compute <span class="arr">→</span></a>
       </div>
-      <ul class="trust-row" aria-label="Platform credentials">
-        <li><span class="dot"></span> Price-time priority CLOB</li>
-        <li>Maker pricing &amp; partial fills</li>
+      <ul class="trust-row" aria-label="What this demo is">
+        <li><span class="dot"></span> Live order book</li>
+        <li>Free demo · no signup</li>
         <li>Simulated liquidity, real mechanics</li>
       </ul>
     </div>
 
-    <!-- Live Ticker Card -->
-    <div class="card market-card" aria-label="Live market summary">
+    <div class="card market-card reveal" aria-label="Live market summary">
       <div class="mc-head">
         <div>
           <p class="ticker-sym mono">GPU-HR · SPOT</p>
           <p class="ticker-name">1 GPU allocated for 1 hour</p>
         </div>
-        <span class="mc-live mono"><span class="dot"></span>EXCHANGE</span>
+        <span class="mc-live mono"><span class="dot"></span>LIVE</span>
       </div>
 
       <div class="spot-row">
-        <p class="spot mono" id="spotPrice">$0.00</p>
-        <span class="delta chip mono" id="spotDelta">+0.00</span>
+        <p class="spot mono loading" id="spotPrice">$—</p>
+        <span class="delta chip mono flat" id="spotDelta">—</span>
       </div>
 
-      <canvas id="spark" height="68" role="img" aria-label="Sparkline of recent trade prices"></canvas>
+      <canvas id="spark" height="70" role="img" aria-label="Sparkline of recent trade prices"></canvas>
 
       <div class="mini-grid">
-        <div><span>Best bid</span><b class="mono up-t" id="bestBid">$0.00</b></div>
-        <div><span>Best ask</span><b class="mono down-t" id="bestAsk">$0.00</b></div>
-        <div><span>Spread</span><b class="mono" id="spread">$0.00</b></div>
+        <div><span>Best bid</span><b class="mono up-t" id="bestBid">—</b></div>
+        <div><span>Best ask</span><b class="mono down-t" id="bestAsk">—</b></div>
+        <div><span>Spread</span><b class="mono" id="spread">—</b></div>
       </div>
 
       <div class="ohl mono" aria-label="Session price statistics">
-        <div><span>Open</span><b id="openP">$0.00</b></div>
-        <div><span>High</span><b id="highP">$0.00</b></div>
-        <div><span>Low</span><b id="lowP">$0.00</b></div>
-        <div><span>VWAP</span><b id="vwapP">$0.00</b></div>
+        <div><span>Open</span><b id="openP">—</b></div>
+        <div><span>High</span><b id="highP">—</b></div>
+        <div><span>Low</span><b id="lowP">—</b></div>
+        <div><span>VWAP</span><b id="vwapP">—</b></div>
       </div>
 
       <p class="session-line mono">
-        Session: <b id="volTrades">0</b> trades · <b id="volQty">0 h</b> volume · <b id="volNotional">$0.00</b> notional
+        Session: <b id="volTrades">—</b> trades · <b id="volQty">—</b> ·
+        <b id="volNotional">—</b> notional
       </p>
+    </div>
+  </div>
+
+  <!-- live trade marquee -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track" id="marqueeTrack">
+      <span class="mq-half"><span class="mq-item">warming up the order book…</span></span>
+      <span class="mq-half"><span class="mq-item">warming up the order book…</span></span>
     </div>
   </div>
 </section>
@@ -120,63 +128,45 @@
 <!-- ======================= TRADING FLOOR ======================= -->
 <section id="market" class="section" aria-labelledby="marketH">
   <div class="container">
-    <div class="section-head">
+    <div class="section-head reveal">
       <div>
         <h2 id="marketH">The trading floor</h2>
-        <p class="sub">Continuous matching with strict price-time priority. Trades execute at maker prices, incoming market sweeps handle partial fills, and remainders rest as visible liquidity.</p>
+        <p class="sub">Every order hits the same matching engine — price-time priority,
+        partial fills, maker prices. The liquidity is simulated; the mechanics are real.</p>
       </div>
-      <span class="pill"><span class="dot"></span>1.5s refresh cycle</span>
+      <span class="pill live"><span class="dot"></span>Updates every second</span>
     </div>
 
     <div class="market-grid">
-      <!-- Order Book Ladder -->
-      <div class="card card-book">
-        <div class="card-title-bar">
-          <h3>Order book</h3>
-          <span class="badge mono">Top 6 levels · GPU-hours</span>
-        </div>
-        <div class="lob-head mono">
-          <span>Price</span>
-          <span>Qty</span>
-          <span>Participant</span>
-          <span>Tier</span>
-        </div>
-        <div id="askRows" class="lob-side asks" aria-label="Sell orders"></div>
-        <div class="lob-spread mono" id="spreadRow">SPREAD $0.00</div>
-        <div id="bidRows" class="lob-side bids" aria-label="Buy orders"></div>
+      <div class="card card-book reveal">
+        <h3>Order book <span class="muted">top 6 · GPU-hours</span></h3>
+        <div class="lob-head mono"><span>Price</span><span>Qty</span><span>Participant</span><span>HW</span></div>
+        <div id="askRows" class="lob-side asks"></div>
+        <div class="lob-spread mono" id="spreadRow">—</div>
+        <div id="bidRows" class="lob-side bids"></div>
       </div>
 
-      <!-- Price Step Chart -->
-      <div class="card card-chart">
-        <div class="card-title-bar">
-          <h3>Spot price execution</h3>
-          <span class="badge mono">Last 60 trades</span>
-        </div>
-        <canvas id="priceChart" height="260" role="img" aria-label="Step-line chart of executed trade prices"></canvas>
+      <div class="card card-chart reveal">
+        <h3>Price <span class="muted">last 60 trades</span></h3>
+        <canvas id="priceChart" height="260" role="img" aria-label="Line chart of recent trade prices"></canvas>
       </div>
 
-      <!-- Trade Tape -->
-      <div class="card card-tape">
-        <div class="card-title-bar">
-          <h3>Trade tape</h3>
-          <span class="badge mono">Real-time fills</span>
-        </div>
-        <div id="tapeRows" class="tape" aria-live="polite" aria-label="Recent trades list"></div>
+      <div class="card card-tape reveal">
+        <h3>Trade tape</h3>
+        <div id="tapeRows" class="tape"></div>
       </div>
     </div>
 
-    <!-- Demand Curve Strip -->
-    <div class="card demand-card">
+    <div class="card demand-card reveal">
       <div class="demand-info">
-        <h3>Simulated 24-hour demand curve</h3>
-        <p class="sub">One full market day elapses every 3 real minutes. AI startup demand surges during the morning training rush and afternoon inference peak, then recedes overnight.</p>
-        <p class="demand-now mono">
-          Simulated time: <b id="demandClock">00:00</b> ·
-          Demand: <b id="demandLabel">NORMAL</b> <span id="demandMult">(×1.00)</span> ·
-          Market fair value: <b id="fairValue">$2.40</b>
-        </p>
+        <h3>Simulated demand curve</h3>
+        <p class="sub">One market day passes every 3 real minutes. Startup demand — and
+        price — surges with the morning training rush and the afternoon inference
+        peak, then dips overnight.</p>
+        <p class="demand-now mono">Clock <b id="demandClock">--:--</b> · demand <b id="demandLabel">—</b>
+        <span id="demandMult" class="muted"></span> · fair value <b id="fairValue">—</b></p>
       </div>
-      <canvas id="demandChart" height="100" role="img" aria-label="24-hour demand curve with current simulated time marker"></canvas>
+      <canvas id="demandChart" height="110" role="img" aria-label="24 hour demand curve with current time marker"></canvas>
     </div>
   </div>
 </section>
@@ -184,123 +174,104 @@
 <!-- ======================= ORDER ENTRY ======================= -->
 <section id="trade" class="section" aria-labelledby="tradeH">
   <div class="container">
-    <div class="section-head">
+    <div class="section-head reveal">
       <div>
         <h2 id="tradeH">Place an order</h2>
-        <p class="sub">Trade directly against active bots and network participants. Cross the spread to fill immediately, or place a limit order to provide resting liquidity.</p>
+        <p class="sub">You're trading against the simulated providers and startups. Cross the
+        spread to fill instantly, or rest on the book and let the market come to you.</p>
       </div>
     </div>
 
     <div class="trade-grid">
-      <!-- BUY / BID FORM -->
-      <form class="card form-card buy" id="bidForm" novalidate>
+      <!-- BUY / BID -->
+      <form class="card form-card buy reveal" id="bidForm" novalidate>
         <div class="form-head">
           <h3>Request compute</h3>
           <span class="side-chip buy">BID · BUY</span>
         </div>
-        <p class="form-sub">Post buy-side demand. Matches against the lowest available ask price, sweeping multiple levels as required.</p>
+        <p class="form-sub">Post demand for GPU-hours. Fills against the cheapest resting supply, top of book first.</p>
 
-        <div class="form-fields">
-          <div class="field">
-            <label for="bidName">Startup / Desk Name</label>
-            <input id="bidName" type="text" value="My AI Startup" maxlength="64" autocomplete="off" spellcheck="false" required>
-          </div>
+        <label for="bidName">Startup / desk name
+          <input id="bidName" type="text" value="My AI Startup" maxlength="64" autocomplete="off" spellcheck="false">
+        </label>
 
-          <div class="field">
-            <label for="bidPrice">Limit Price (USD per GPU-hour)</label>
-            <input id="bidPrice" class="mono" type="number" min="0.05" max="50.00" step="0.01" value="2.50" inputmode="decimal" required>
-            <div class="quick">
-              <button type="button" class="btn btn-tiny" id="bidPayAsk">Pay best ask</button>
-              <button type="button" class="btn btn-tiny" id="bidOutbid">Outbid +$0.01</button>
-            </div>
-            <p class="hint" id="bidHint">Loading market depth…</p>
-          </div>
-
-          <div class="field">
-            <label for="bidQty">Quantity (GPU-hours)</label>
-            <input id="bidQty" class="mono" type="number" min="1" max="100000" step="1" value="100" inputmode="numeric" required>
-            <p class="hint">Estimated cost at limit: <b class="mono" id="bidEst">$250.00</b> (you only pay for executed fills)</p>
-          </div>
+        <label for="bidPrice">Limit price — USD per GPU-hour
+          <input id="bidPrice" class="mono" type="number" min="0.05" max="50" step="0.01" value="2.50" inputmode="decimal">
+        </label>
+        <div class="quick">
+          <button type="button" class="btn btn-tiny" id="bidPayAsk">Pay best ask</button>
+          <button type="button" class="btn btn-tiny" id="bidOutbid">Outbid +1¢</button>
         </div>
+        <p class="hint" id="bidHint">—</p>
 
-        <button class="btn btn-primary btn-wide" id="bidSubmit" type="submit">Submit Buy Order</button>
+        <label for="bidQty">Quantity — GPU-hours
+          <input id="bidQty" class="mono" type="number" min="1" max="100000" step="1" value="100" inputmode="numeric">
+        </label>
+        <p class="hint">Est. cost at limit: <b class="mono" id="bidEst">$250.00</b> — you only pay for what fills.</p>
+
+        <button class="btn btn-primary btn-wide" id="bidSubmit" type="submit">Place bid</button>
         <div class="result" id="bidResult" aria-live="polite"></div>
       </form>
 
-      <!-- SELL / ASK FORM -->
-      <form class="card form-card sell" id="askForm" novalidate>
+      <!-- SELL / ASK -->
+      <form class="card form-card sell reveal" id="askForm" novalidate>
         <div class="form-head">
           <h3>Offer compute</h3>
           <span class="side-chip sell">ASK · SELL</span>
         </div>
-        <p class="form-sub">List sell-side capacity. Crossing buyers fill immediately at your price; unfilled hours rest on the book.</p>
+        <p class="form-sub">List GPU capacity. Crossing buyers fill against you instantly at your price.</p>
 
-        <div class="form-fields">
-          <div class="field">
-            <label for="askName">Provider / Desk Name</label>
-            <input id="askName" type="text" value="My GPU Farm" maxlength="64" autocomplete="off" spellcheck="false" required>
-          </div>
+        <label for="askName">Provider / desk name
+          <input id="askName" type="text" value="My GPU Farm" maxlength="64" autocomplete="off" spellcheck="false">
+        </label>
 
-          <div class="field">
-            <label for="askHw">Hardware Architecture Tier</label>
-            <select id="askHw">
-              <option value="RTX 4090">RTX 4090</option>
-              <option value="L40S">L40S</option>
-              <option value="A100 80GB">A100 80GB</option>
-              <option value="H100 SXM" selected>H100 SXM</option>
-              <option value="H200">H200</option>
-            </select>
-            <p class="hint" id="hwRef">Hardware baseline: calculating…</p>
-          </div>
+        <label for="askHw">Hardware tier
+          <select id="askHw">
+            <option>RTX 4090</option>
+            <option>L40S</option>
+            <option>A100 80GB</option>
+            <option selected>H100 SXM</option>
+            <option>H200</option>
+          </select>
+        </label>
+        <p class="hint" id="hwRef">Market reference: —</p>
 
-          <div class="field">
-            <label for="askPrice">Limit Price (USD per GPU-hour)</label>
-            <input id="askPrice" class="mono" type="number" min="0.05" max="50.00" step="0.01" value="2.50" inputmode="decimal" required>
-            <div class="quick">
-              <button type="button" class="btn btn-tiny" id="askMatchBid">Sell @ best bid</button>
-              <button type="button" class="btn btn-tiny" id="askUndercut">Undercut -$0.01</button>
-            </div>
-            <p class="hint" id="askHint">Loading market depth…</p>
-          </div>
-
-          <div class="field">
-            <label for="askQty">Quantity (GPU-hours)</label>
-            <input id="askQty" class="mono" type="number" min="1" max="100000" step="1" value="50" inputmode="numeric" required>
-            <p class="hint">Estimated value at limit: <b class="mono" id="askEst">$125.00</b></p>
-          </div>
+        <label for="askPrice">Limit price — USD per GPU-hour
+          <input id="askPrice" class="mono" type="number" min="0.05" max="50" step="0.01" value="2.50" inputmode="decimal">
+        </label>
+        <div class="quick">
+          <button type="button" class="btn btn-tiny" id="askMatchBid">Sell @ best bid</button>
+          <button type="button" class="btn btn-tiny" id="askUndercut">Undercut −1¢</button>
         </div>
+        <p class="hint" id="askHint">—</p>
 
-        <button class="btn btn-danger btn-wide" id="askSubmit" type="submit">Submit Sell Order</button>
+        <label for="askQty">Quantity — GPU-hours
+          <input id="askQty" class="mono" type="number" min="1" max="100000" step="1" value="50" inputmode="numeric">
+        </label>
+        <p class="hint">Est. value at limit: <b class="mono" id="askEst">$125.00</b></p>
+
+        <button class="btn btn-danger btn-wide" id="askSubmit" type="submit">Place ask</button>
         <div class="result" id="askResult" aria-live="polite"></div>
       </form>
     </div>
 
-    <!-- Active Orders Tracking Table -->
-    <div class="card orders-card">
+    <div class="card orders-card reveal">
       <div class="orders-head">
         <div>
           <h3>Your orders</h3>
-          <p class="sub">Tracked live in this session. When your limit orders rest, watch them fill as simulator bots trade through your price level.</p>
+          <p class="sub">Tracked in this browser — status updates live. Watch resting orders
+          fill as the bots cross them.</p>
         </div>
       </div>
       <div class="table-wrap">
         <table class="orders-table">
           <thead>
-            <tr>
-              <th scope="col">Order ID</th>
-              <th scope="col">Side</th>
-              <th scope="col">Counterparty</th>
-              <th scope="col">Limit</th>
-              <th scope="col">Execution Progress</th>
-              <th scope="col">VWAP</th>
-              <th scope="col">Status</th>
-              <th scope="col"><span class="visually-hidden">Actions</span></th>
-            </tr>
+            <tr><th>Order</th><th>Side</th><th>Party</th><th>Price</th><th>Filled</th><th>Avg fill</th><th>Status</th><th><span class="visually-hidden">Remove</span></th></tr>
           </thead>
           <tbody id="ordersBody"></tbody>
         </table>
       </div>
-      <p class="hint orders-empty" id="ordersEmpty">No submitted orders yet. Place a bid or ask above to track live executions here.</p>
+      <p class="hint" id="ordersEmpty">No orders yet — place a bid or ask above and it'll show up here.</p>
     </div>
   </div>
 </section>
@@ -308,94 +279,70 @@
 <!-- ======================= HOW IT WORKS ======================= -->
 <section id="how" class="section" aria-labelledby="howH">
   <div class="container">
-    <div class="section-head">
-      <div>
-        <h2 id="howH">How it works</h2>
-        <p class="sub">Direct bilateral liquidity matched by financial algorithms. No sales negotiations, no lock-in contracts.</p>
-      </div>
+    <div class="section-head reveal"><div><h2 id="howH">How it works</h2>
+      <p class="sub">One book, two sides. The spread is the only negotiation.</p></div>
     </div>
     <div class="how-grid">
-      <div class="card how-card">
+      <div class="card how-card reveal">
         <h3><span class="side-chip sell">SELL</span> For compute providers</h3>
-        <div class="step">
-          <span class="step-n">A</span>
-          <div>
-            <b>List idle capacity</b>
-            <p>Select your GPU tier, specify price per hour, and choose volume in GPU-hours. Your order joins the limit order book immediately.</p>
-          </div>
-        </div>
-        <div class="step">
-          <span class="step-n">B</span>
-          <div>
-            <b>Instant continuous matching</b>
-            <p>Crossing buyers fill your capacity at your limit price. Any unmatched volume rests on the book as visible market liquidity.</p>
-          </div>
-        </div>
-        <div class="step">
-          <span class="step-n">C</span>
-          <div>
-            <b>Partial fills by default</b>
-            <p>Buyers can take fractional lots (e.g. 20 of your 50 GPU-hours). The remaining 30 continue working without cancellation.</p>
-          </div>
-        </div>
+        <div class="step"><span class="step-n">1</span><div><b>List your capacity</b><p>Pick a hardware tier, set your price per GPU-hour, size the offer. It hits the book instantly.</p></div></div>
+        <div class="step"><span class="step-n">2</span><div><b>Get matched</b><p>Crossing buyers fill against you immediately at <i>your</i> price. Otherwise your offer rests as visible liquidity.</p></div></div>
+        <div class="step"><span class="step-n">3</span><div><b>Sell every hour</b><p>Partial fills mean buyers take exactly what they need — the rest of your offer keeps working.</p></div></div>
       </div>
-
-      <div class="card how-card">
-        <h3><span class="side-chip buy">BUY</span> For AI engineering teams</h3>
-        <div class="step">
-          <span class="step-n">A</span>
-          <div>
-            <b>Post compute demand</b>
-            <p>Set your maximum limit price and batch size. Bypass cloud reservation quotas, minimum spend commitments, and enterprise sales calls.</p>
-          </div>
-        </div>
-        <div class="step">
-          <span class="step-n">B</span>
-          <div>
-            <b>Deep liquidity sweeping</b>
-            <p>Large orders automatically sweep the lowest asks on the book sequentially, locking in optimal volume-weighted pricing.</p>
-          </div>
-        </div>
-        <div class="step">
-          <span class="step-n">C</span>
-          <div>
-            <b>Pay only for execution</b>
-            <p>Funds clear strictly on executed matches. Resting remainders continue waiting until sellers cross down to your bid.</p>
-          </div>
-        </div>
+      <div class="card how-card reveal">
+        <h3><span class="side-chip buy">BUY</span> For AI teams</h3>
+        <div class="step"><span class="step-n">1</span><div><b>Post a request</b><p>Name your price and batch size in GPU-hours. No negotiation, no contracts, no sales calls.</p></div></div>
+        <div class="step"><span class="step-n">2</span><div><b>Fill from the top</b><p>You're matched with the cheapest supply first, sweeping price levels when you need volume.</p></div></div>
+        <div class="step"><span class="step-n">3</span><div><b>Pay for what fills</b><p>Your unmatched remainder keeps resting at your price until supply crosses down to it.</p></div></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ======================= FREQUENTLY ASKED QUESTIONS ======================= -->
+<!-- ======================= FAQ ======================= -->
 <section id="faq" class="section" aria-labelledby="faqH">
   <div class="container">
-    <div class="section-head">
-      <div>
-        <h2 id="faqH">Frequently asked questions</h2>
-      </div>
-    </div>
-    <div class="faq-list">
+    <div class="section-head reveal"><div><h2 id="faqH">FAQ</h2></div></div>
+    <div class="faq-list reveal">
       <details>
-        <summary>Is real hardware connected to this system?</summary>
-        <p>No. This MVP is a high-fidelity simulation of the marketplace coordination layer. The Central Limit Order Book, matching engine, and price discovery mechanisms are fully functional production code, while liquidity is driven by synthetic bots. A production deployment incorporates cryptographic workload verification, container orchestration, and escrow payment settlement.</p>
+        <summary>Is real compute being traded here?</summary>
+        <p>No — and that's deliberate. This MVP is a faithful simulation of the <i>marketplace
+        layer</i>: the order book, matching engine, and price discovery are real code, but the
+        participants and liquidity are bots. A production version adds escrowed payments,
+        identity verification, and the genuinely hard part — orchestrating containerized
+        workloads on provider machines (scheduling, GPU drivers, networking, data transfer,
+        verified disk wipes).</p>
       </details>
       <details>
-        <summary>How is the live spot price calculated?</summary>
-        <p>Spot price represents the clearing price of the most recently executed trade on the order book. When bids and asks cross, trades settle at the maker's limit price, establishing transparent market-clearing levels governed entirely by supply and demand.</p>
+        <summary>How is the price determined?</summary>
+        <p>Pure supply and demand on a central limit order book. Bids and asks cross at the
+        maker's price; the <b>spot price</b> is simply the last executed trade. Simulated
+        startup demand follows a time-of-day curve (morning training rush, afternoon inference
+        peak, overnight lull), so prices move in recognizable waves.</p>
       </details>
       <details>
-        <summary>What is a GPU-hour?</summary>
-        <p>One GPU-hour equals one GPU allocated for sixty minutes. For instance, an 8-GPU node running a 30-minute test run consumes 4 GPU-hours. It serves as the standardized commodity unit that enables heterogeneous hardware architectures to trade on a unified order book.</p>
+        <summary>What's a GPU-hour?</summary>
+        <p>One GPU allocated for one hour. 8 GPUs running for 30 minutes = 4 GPU-hours. It's the
+        fungible unit that makes heterogeneous hardware tradeable on one book — an RTX 4090
+        hour and an H200 hour are priced differently, but both are GPU-hours.</p>
       </details>
       <details>
-        <summary>Why does the spot price fluctuate in cycles?</summary>
-        <p>The simulation compresses a 24-hour enterprise training cycle into 3 real-world minutes. You can observe demand rise during peak hours as startup bots submit urgent batch training bids, and soften during off-peak periods.</p>
+        <summary>What does it cost to use?</summary>
+        <p>$0 in this MVP. Production compute marketplaces typically charge a 5–15% take rate
+        on filled volume, plus payment processing (~3%). The order confirmations here show the
+        fee line explicitly so the economics stay visible.</p>
       </details>
       <details>
-        <summary>Are transactions and order state stored in a database?</summary>
-        <p>The matching engine maintains an in-memory limit order book to maximize throughput and minimize latency. Your client-side orders are tracked within your browser session.</p>
+        <summary>Do I need an account?</summary>
+        <p>No. This demo has no signup and collects nothing — your tracked orders live in your
+        browser's local storage only. The engine's state is in-memory, so restarting the
+        backend resets the market.</p>
+      </details>
+      <details>
+        <summary>Why does the price move in waves?</summary>
+        <p>The simulation compresses a 24-hour demand cycle into 3 real minutes so you can
+        watch a full trading day in one sitting. Watch the demand curve strip under the
+        trading floor — when demand peaks, bids get aggressive and the spot price climbs.</p>
       </details>
     </div>
   </div>
@@ -408,19 +355,17 @@
   <div class="container footer-inner">
     <div>
       <div class="brand footer-brand">
-        <svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="7" fill="#4d7cff"/><path d="M17.5 4 8 18h6l-1.5 10L22 14h-6z" fill="#fff"/></svg>
+        <svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#6ea8ff"/><path d="M17.5 4 8 18h6l-1.5 10L22 14h-6z" fill="#fff"/></svg>
         <span>CLaaS</span>
       </div>
-      <p class="sub">Compute-Liquidity-as-a-Service: A high-frequency spot marketplace simulation for GPU compute.</p>
+      <p class="sub">An MVP demo of a spot market for GPU compute.</p>
     </div>
-    <p class="disclaimer">
-      Market participants and liquidity on this page are generated for simulation and research purposes.
-      Engine state operates in memory. Explore the <a href="/docs" target="_blank" rel="noopener">OpenAPI Specification</a> for algorithmic trading interfaces.
-    </p>
+    <p class="disclaimer">All participants, liquidity, and trades on this page are simulated for
+    demonstration. No real hardware, payments, or personal data are involved. Market state is
+    in-memory — restarting the engine restarts the market. <a href="/docs" target="_blank" rel="noopener">API docs</a></p>
   </div>
 </footer>
 
-<!-- Toast Notifications Container -->
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script src="/static/app.js"></script>

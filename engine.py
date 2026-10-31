@@ -1,8 +1,8 @@
 """
 engine.py
 =========
-The core of the CLaaS platform: a price/time-priority Central Limit Order
-Book (CLOB) that turns GPU compute into a liquid, tradeable commodity.
+The core of the CLaaS platform: a price/time-priority **Central Limit Order
+Book (CLOB)** that turns GPU compute into a liquid, tradeable commodity.
 
 Market semantics
 ----------------
@@ -11,8 +11,8 @@ Market semantics
 * Asks (supply)  : node providers (crypto farms, academic labs, spot clouds).
 * Bids (demand)  : AI startups / researchers that need compute.
 * Matching       : continuous. An incoming bid matches the cheapest resting
-                   asks while ask.price <= bid.price (mirror image for an
-                   incoming ask). Trades print at the resting (maker) price.
+                   asks while ``ask.price <= bid.price`` (mirror image for an
+                   incoming ask). Trades print at the *resting* (maker) price.
 * Partial fills  : an incoming order is filled against as many opposite
                    resting orders as its limit allows; the unmatched remainder
                    rests on the book at its limit price. Example: a startup
@@ -24,17 +24,17 @@ Concurrency
 -----------
 The single in-memory book instance is shared by the FastAPI request handlers
 and the asyncio simulator loops (see simulators.py / api.py). Every mutating
-operation takes a re-entrant threading.RLock, so the engine stays correct
+operation takes a re-entrant ``threading.RLock``, so the engine stays correct
 even if it is later driven from multiple threads.
 
 Order tracking
 --------------
 Every submitted order (and its fills) is indexed by id for a bounded window,
-which powers GET /order/{id} — the web UI's live "your orders" tracker.
+which powers ``GET /order/{id}`` — the web UI's live "your orders" tracker.
 
 Internal representation
 -----------------------
-Two binary min-heaps of tuples:
+Two binary min-heaps of tuples::
 
     asks: ( price,  timestamp, order_id, Ask)   -> cheapest ask on top
     bids: (-price, timestamp, order_id, Bid)     -> highest  bid on top
@@ -201,7 +201,7 @@ class OrderBook:
         """
         Submit sell-side liquidity and run the matching loop.
 
-        The incoming ask sweeps resting bids while bid.price >= ask.price
+        The incoming ask sweeps resting bids while ``bid.price >= ask.price``
         (each fill prints at the resting bid's price, since the bid is the
         maker). Any unmatched remainder rests on the book at its limit price.
 
@@ -228,7 +228,7 @@ class OrderBook:
         """
         Submit buy-side demand and run the matching loop.
 
-        The incoming bid sweeps resting asks while ask.price <= bid.price
+        The incoming bid sweeps resting asks while ``ask.price <= bid.price``
         (each fill prints at the resting ask's price, since the ask is the
         maker). Any unmatched remainder rests on the book at its limit price.
 
@@ -345,7 +345,7 @@ class OrderBook:
             self._fills_by_order.pop(old, None)
 
     def _execute(self, buy: Bid, sell: Ask, price: float, aggressor: str) -> Trade:
-        """Fill min(buy.quantity, sell.quantity) units at price and record it."""
+        """Fill ``min(buy.quantity, sell.quantity)`` units at ``price`` and record it."""
         fill = min(buy.quantity, sell.quantity)
         buy.quantity -= fill
         sell.quantity -= fill
@@ -380,8 +380,10 @@ class OrderBook:
 
     def _prune(self, heap: list) -> None:
         """
-        Keep the book tidy: when a side exceeds max_depth_per_side
-        resting orders, the worst-priced tail is culled.
+        Keep the book tidy: when a side exceeds ``max_depth_per_side``
+        resting orders, the *worst-priced* tail is culled (a stand-in for
+        real-world order expiry / cancel-on-stale). A sorted prefix is itself
+        a valid heap, so an in-place rebuild is safe.
         """
         if len(heap) > self.max_depth_per_side:
             heap[:] = sorted(heap)[: self.max_depth_per_side]

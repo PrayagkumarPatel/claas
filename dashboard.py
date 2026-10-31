@@ -9,9 +9,13 @@ engine. It polls the engine every second and renders:
   * a price tape and a scrolling ledger of recently executed trades,
   * manual bid / ask forms so you can trade against the simulator bots.
 
-The live sections re-render through st.fragment(run_every=1.0) (Streamlit
+The live sections re-render through ``st.fragment(run_every=1)`` (Streamlit
 >= 1.37), which refreshes only the market panel without wiping the input
 forms below it.
+
+Run (after the engine is up on :8000):
+
+    streamlit run dashboard.py
 """
 
 from __future__ import annotations
@@ -34,9 +38,10 @@ st.set_page_config(page_title="CLaaS Trading Desk", page_icon="🖥️", layout=
 
 BOOK_DEPTH = 5        # top-N levels per side shown in the ladder
 LEDGER_ROWS = 15      # trades visible in the scrolling ledger
-HARDWARE_OPTIONS = ["RTX 4090", "L40S", "A100 80GB", "H100 SXM", "H200"]
-FRAGMENTS_SUPPORTED = hasattr(st, "fragment")
+HARDWARE_OPTIONS = ["RTX 4090", "L40S", "A100 80GB", "H100 SXM", "H200"]  # mirrors simulators.py
+FRAGMENTS_SUPPORTED = hasattr(st, "fragment")  # st.fragment needs Streamlit >= 1.37
 
+# Light cosmetic CSS — inline only, so the page renders fully offline.
 st.markdown(
     """
     <style>
@@ -58,8 +63,9 @@ st.markdown(
 
 def live(run_every: float = 1.0):
     """
-    Decorator marking a UI section as live: it re-renders every second via
-    st.fragment without rerunning the whole script.
+    Decorator marking a UI section as *live*: it re-renders every second via
+    st.fragment without rerunning the whole script (so the manual order forms
+    below keep their state). Falls back to a plain function on old Streamlit.
     """
     def decorator(fn):
         if FRAGMENTS_SUPPORTED:
@@ -80,7 +86,7 @@ def money(x: Optional[float]) -> str:
 
 
 def api_get(base: str, path: str, params: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
-    """GET json from the engine; return None if unreachable."""
+    """GET json from the engine; return None (never raise) if unreachable."""
     try:
         resp = requests.get(f"{base}{path}", params=params, timeout=2.5)
         resp.raise_for_status()
@@ -148,6 +154,7 @@ def ladder_fig(book: Dict[str, Any]) -> go.Figure:
             customdata=[[a["provider"], a["hardware"]] for a in asks],
         )
 
+    # Dotted midline with the spread, when both sides are populated.
     if book.get("spread") is not None and bids and asks:
         mid = (book["best_bid"] + book["best_ask"]) / 2
         fig.add_hline(y=mid, line_dash="dot", line_color="#8a94a6",
@@ -162,7 +169,7 @@ def ladder_fig(book: Dict[str, Any]) -> go.Figure:
         legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
         xaxis_title="Quantity (GPU-hours)",
         yaxis_title="Price ($/GPU-hr)",
-        yaxis_autorange="reversed",   # asks on top, bids underneath
+        yaxis_autorange="reversed",   # expensive asks on top, bids underneath
     )
     return fig
 
