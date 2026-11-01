@@ -6,6 +6,10 @@ fastapi>=0.110
 uvicorn>=0.29
 pydantic>=2.6
 
+# --- Optional: Supabase mirror (engine works without it; needed to persist
+#     orders/trades to Postgres for the Next.js terminal) ---
+supabase>=2.0
+
 # --- Trading desk UI ---
 streamlit>=1.37        # >=1.37 required for st.fragment (1s auto-refresh)
 

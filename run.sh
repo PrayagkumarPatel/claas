@@ -17,6 +17,13 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# 0) Optional: load server-side env vars (Supabase credentials etc.) from .env
+#    (.env is gitignored — keep real keys out of the repo)
+if [ -f .env ]; then
+  set -a; source .env; set +a
+  echo "▶ Loaded environment from .env"
+fi
+
 PORT="${PORT:-8000}"
 VENV=".venv"
 

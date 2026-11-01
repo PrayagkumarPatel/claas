@@ -73,7 +73,10 @@ then ok "frontend wiring intact"; else bad "frontend wiring broken — see messa
 # ---- 4) live engine test ----------------------------------------------------
 echo "[4] live matching-engine test (scratch port $PORT, bots off)"
 if "$PY" -c "import fastapi, uvicorn" 2>/dev/null; then
-  RUN_SIMULATORS=0 "$PY" -m uvicorn api:app --port "$PORT" >/tmp/claas_health.log 2>&1 &
+  # env -u keeps the test hermetic: no Supabase mirroring, no simulator bots,
+  # so the health check never touches or mutates a live database.
+  env -u SUPABASE_URL -u SUPABASE_KEY -u CLAAS_DB_BOOTSTRAP \
+      RUN_SIMULATORS=0 "$PY" -m uvicorn api:app --port "$PORT" >/tmp/claas_health.log 2>&1 &
   SRV=$!
   for i in $(seq 1 40); do
     curl -sf "http://localhost:$PORT/health" >/dev/null 2>&1 && break

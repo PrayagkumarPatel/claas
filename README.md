@@ -109,11 +109,15 @@ curl -s localhost:8000/history?limit=5
 
 | File | Role |
 |---|---|
-| `engine.py` | CLOB: Pydantic `Ask`/`Bid`/`Trade`, heap-based matching, partial fills, spot price, order-status tracking |
+| `engine.py` | CLOB: Pydantic `Ask`/`Bid`/`Trade`, heap-based matching, partial fills, spot price, order-status tracking, optional Supabase mirror (orders + fills persisted to Postgres; matching stays in memory) |
 | `api.py` | FastAPI routing layer + static web app + simulator lifecycle |
 | `simulators.py` | Asyncio bots: 9 providers quoting every 2–5s; 8 startups on a time-of-day demand curve |
 | `static/index.html` `styles.css` `app.js` | The web frontend — vanilla HTML/CSS/JS, no build step, no CDNs |
 | `dashboard.py` | Optional Streamlit power-desk (legacy view of the same engine) |
+| `web/` | Next.js (App Router) + Tailwind + shadcn/ui trading terminal — reads `orders`/`trades` from Supabase Postgres with realtime subscriptions; demo mode without credentials (see `web/README.md`) |
+| `ROADMAP.md` | Strategy: architecture, phase gates with exit criteria, unit economics, security & legal checklists, risk register |
+| `db/migrations/001_core_schema.sql` | Production schema (profiles, wallets+ledger, nodes, orders, trades, assignments) with full RLS — for a fresh Supabase project |
+| `agent/claas_agent.py` | Supplier node agent v0 — GPU detection, register, heartbeat, job listener (execution deliberately not implemented; see ROADMAP §6) |
 
 ## Environment knobs
 
@@ -121,6 +125,16 @@ curl -s localhost:8000/history?limit=5
 |---|---|---|
 | `RUN_SIMULATORS` | `1` | `0` boots an empty, manual-only market |
 | `LOG_LEVEL` | `INFO` | `DEBUG` also logs every resting order / bot tick |
+| `SUPABASE_URL` | unset | Set with `SUPABASE_KEY` to mirror all orders/fills to Postgres (the Next.js terminal reads from there). Unset = pure in-memory mode. |
+| `SUPABASE_KEY` | unset | **Use the service_role key** (server-side only, e.g. in `.env` — loaded by `./run.sh`, gitignored). The anon key technically works if RLS allows writes, but then anyone holding the public anon key can write your tables. |
+| `CLAAS_DB_BOOTSTRAP` | read-only | `cancel` wipes all open orders at boot; `restore` **rebuilds the in-memory book from the DB** (memory becomes a cache of Postgres — restarts lose nothing); default seeds only the spot price. |
+
+Optional columns: the mirror auto-detects your schema. Add `hardware` to `orders`
+or `buyer`/`seller`/`hardware` to `trades` and they'll be populated automatically:
+
+```sql
+alter table public.trades add column if not exists buyer text, add column if not exists seller text;
+```
 
 ## Real-market price anchor
 

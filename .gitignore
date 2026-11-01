@@ -7,6 +7,17 @@ venv/
 .mypy_cache/
 .ruff_cache/
 
+# --- Stray virtual environment created AT the repo root ---
+# (python3 -m venv . manifests as bin/ lib/ include/ pyvenv.cfg —
+#  invisible to the .venv/ rules above)
+/bin/
+/include/
+/lib/
+/pyvenv.cfg
+
+# --- Local tool config ---
+.impeccable/
+
 # --- Secrets & environment (NEVER commit these) ---
 .env
 .env.*
@@ -28,10 +39,3 @@ venv/
 # --- Frontend (if it ever grows a build step) ---
 node_modules/
 dist/
-
-# stray venv created at the repo root
-/bin/
-/include/
-/lib/
-/pyvenv.cfg
-.impeccable/

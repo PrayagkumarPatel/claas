@@ -50,7 +50,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 import simulators
-from engine import Ask, Bid, OrderBook, Trade, new_ask, new_bid
+from engine import Ask, Bid, OrderBook, Trade, make_sink_from_env, new_ask, new_bid
 
 # ---------------------------------------------------------------------------
 # Setup
@@ -65,7 +65,9 @@ log = logging.getLogger("claas.api")
 RUN_SIMULATORS = os.environ.get("RUN_SIMULATORS", "1").lower() not in {"0", "false", "no", "off"}
 
 # The single shared in-memory book — the source of truth for the platform.
-book = OrderBook()
+# When SUPABASE_URL / SUPABASE_KEY are set, every order/fill is mirrored to
+# Postgres so the Next.js terminal (and anything else) can read live data.
+book = OrderBook(sink=make_sink_from_env())
 
 # Directory holding the web app's static assets (index.html, styles.css, app.js).
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -83,6 +85,7 @@ async def lifespan(app: FastAPI):
         )
     else:
         log.info("RUN_SIMULATORS=0 -> empty book, manual orders only.")
+    log.info("Supabase mirror: %s", "ON" if book.persistence_active else "off (in-memory only)")
     try:
         yield
     finally:
