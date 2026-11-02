@@ -11,7 +11,7 @@ import type { Order, OrderStatus, Side, Trade } from "@/lib/types"
  * orders are shown — add "partial" if you also want partially-filled orders
  * that still have resting quantity on the book.
  */
-const BOOK_STATUSES: OrderStatus[] = ["open"]
+const BOOK_STATUSES: OrderStatus[] = ["open", "partial"]
 
 const ORDERS_PER_SIDE = 30
 const TRADES_LIMIT = 25
