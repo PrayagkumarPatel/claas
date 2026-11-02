@@ -21,6 +21,7 @@ venv/
 # --- Secrets & environment (NEVER commit these) ---
 .env
 .env.*
+!.env.example
 
 # --- Local agent/tooling configs (impeccable, cursor, etc. — machine-local) ---
 .agent/
@@ -39,7 +40,3 @@ venv/
 # --- Frontend (if it ever grows a build step) ---
 node_modules/
 dist/
-
-!.env.example
-
-!.env.example

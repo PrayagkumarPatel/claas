@@ -112,7 +112,7 @@ curl -s localhost:8000/history?limit=5
 | `engine.py` | CLOB: Pydantic `Ask`/`Bid`/`Trade`, heap-based matching, partial fills, spot price, order-status tracking, optional Supabase mirror (orders + fills persisted to Postgres; matching stays in memory) |
 | `api.py` | FastAPI routing layer + static web app + simulator lifecycle |
 | `simulators.py` | Asyncio bots: 9 providers quoting every 2–5s; 8 startups on a time-of-day demand curve |
-| `static/index.html` `styles.css` `app.js` | The web frontend — vanilla HTML/CSS/JS, no build step, no CDNs |
+| `static/index.html` `styles.css` `app.js` | The web frontend — vanilla HTML/CSS/JS, no build step, no CDNs. v3 "commodity desk" terminal: monospace data, hairline rules, zero gradients/radius/shadows |
 | `dashboard.py` | Optional Streamlit power-desk (legacy view of the same engine) |
 | `web/` | Next.js (App Router) + Tailwind + shadcn/ui trading terminal — reads `orders`/`trades` from Supabase Postgres with realtime subscriptions; demo mode without credentials (see `web/README.md`) |
 | `ROADMAP.md` | Strategy: architecture, phase gates with exit criteria, unit economics, security & legal checklists, risk register |

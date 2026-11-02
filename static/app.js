@@ -289,12 +289,12 @@ function drawSpark() {
   const Y = (p) => 6 + (1 - (p - min) / span) * (h - 14);
 
   const grad = ctx.createLinearGradient(0, 0, 0, h);
-  grad.addColorStop(0, "rgba(110,168,255,.28)");
-  grad.addColorStop(1, "rgba(110,168,255,0)");
+  grad.addColorStop(0, "rgba(255,180,84,.22)");
+  grad.addColorStop(1, "rgba(255,180,84,0)");
 
   ctx.beginPath();
   pts.forEach((p, i) => (i ? ctx.lineTo(X(i), Y(p)) : ctx.moveTo(X(i), Y(p))));
-  ctx.strokeStyle = "#6ea8ff";
+  ctx.strokeStyle = "#ffb454";
   ctx.lineWidth = 2;
   ctx.lineJoin = "round";
   ctx.stroke();
@@ -314,7 +314,7 @@ function drawPriceChart() {
   ctx.font = "10px ui-monospace, Menlo, monospace";
 
   if (trades.length < 2) {
-    ctx.fillStyle = "#6b7a99";
+    ctx.fillStyle = "#8f8b7a";
     ctx.textAlign = "center";
     ctx.fillText(trades.length ? "waiting for more trades…" : "waiting for the first trade…", w / 2, h / 2);
     return;
@@ -333,7 +333,7 @@ function drawPriceChart() {
     const y = Y(p);
     ctx.strokeStyle = "rgba(255,255,255,.05)";
     ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
-    ctx.fillStyle = "#6b7a99";
+    ctx.fillStyle = "#8f8b7a";
     ctx.fillText("$" + p.toFixed(2), pad.l - 7, y + 3);
   }
 
@@ -350,7 +350,7 @@ function drawPriceChart() {
     ctx.lineTo(X(i), Y(trades[i - 1].price));
     ctx.lineTo(X(i), Y(t.price));
   });
-  ctx.strokeStyle = "#6ea8ff";
+  ctx.strokeStyle = "#ffb454";
   ctx.lineWidth = 1.8;
   ctx.lineJoin = "round";
   ctx.stroke();
@@ -360,8 +360,8 @@ function drawPriceChart() {
   ctx.lineTo(X(0), h - pad.b);
   ctx.closePath();
   const fill = ctx.createLinearGradient(0, pad.t, 0, h - pad.b);
-  fill.addColorStop(0, "rgba(110,168,255,.16)");
-  fill.addColorStop(1, "rgba(110,168,255,0)");
+  fill.addColorStop(0, "rgba(255,180,84,.10)");
+  fill.addColorStop(1, "rgba(255,180,84,0)");
   ctx.fillStyle = fill;
   ctx.fill();
 
@@ -369,11 +369,11 @@ function drawPriceChart() {
   const lastP = trades[trades.length - 1].price;
   const ly = Y(lastP);
   ctx.setLineDash([4, 4]);
-  ctx.strokeStyle = "rgba(251,191,36,.65)";
+  ctx.strokeStyle = "rgba(255,180,84,.55)";
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(pad.l, ly); ctx.lineTo(w - pad.r, ly); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = "#fbbf24";
+  ctx.fillStyle = "#ffb454";
   ctx.textAlign = "right";
   ctx.fillText("$" + lastP.toFixed(2), w - pad.r - 2, ly - 5);
 }
@@ -401,7 +401,7 @@ function drawDemandCurve() {
 
   // hour labels
   ctx.font = "9.5px ui-monospace, Menlo, monospace";
-  ctx.fillStyle = "#6b7a99";
+  ctx.fillStyle = "#8f8b7a";
   ctx.textAlign = "center";
   [0, 6, 12, 18, 24].forEach((hr) => ctx.fillText(String(hr).padStart(2, "0") + "h", Math.min(Math.max(X(hr), 12), w - 12), h - 3));
 
@@ -411,14 +411,14 @@ function drawDemandCurve() {
     const x = X(hr), y = Y(demandMultiplier(hr));
     hr ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
   }
-  ctx.strokeStyle = "#a78bfa";
+  ctx.strokeStyle = "#a8a496";
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.lineTo(X(24), h - pad.b);
   ctx.lineTo(X(0), h - pad.b);
   ctx.closePath();
   const fill = ctx.createLinearGradient(0, pad.t, 0, h - pad.b);
-  fill.addColorStop(0, "rgba(167,139,250,.22)");
+  fill.addColorStop(0, "rgba(168,164,150,.14)");
   fill.addColorStop(1, "rgba(167,139,250,0)");
   ctx.fillStyle = fill;
   ctx.fill();
@@ -426,12 +426,12 @@ function drawDemandCurve() {
   // "now" marker
   const hr = state.hour % 24;
   const y = Y(demandMultiplier(hr));
-  ctx.strokeStyle = "rgba(103,232,249,.8)";
+  ctx.strokeStyle = "rgba(89,217,140,.7)";
   ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(X(hr), pad.t); ctx.lineTo(X(hr), h - pad.b); ctx.stroke();
   ctx.beginPath(); ctx.arc(X(hr), y, 4.5, 0, Math.PI * 2);
-  ctx.fillStyle = "#67e8f9"; ctx.fill();
-  ctx.strokeStyle = "#05070d"; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = "#59d98c"; ctx.fill();
+  ctx.strokeStyle = "#0b0b09"; ctx.lineWidth = 2; ctx.stroke();
 }
 
 function renderDemand() {
