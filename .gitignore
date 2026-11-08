@@ -40,3 +40,7 @@ venv/
 # --- Frontend (if it ever grows a build step) ---
 node_modules/
 dist/
+
+# never commit nested copies or build output
+claas_mvp/
+.next/
