@@ -84,6 +84,45 @@ def detect_gpus(nvidia_smi_output: Optional[str] = None) -> List[Dict[str, Any]]
     return list(counts.values())
 
 
+def sample_telemetry(nvidia_smi_output: Optional[str] = None) -> List[Dict[str, Any]]:
+    """
+    Live per-GPU telemetry: utilization %, temp C, power W, VRAM usage.
+    Polled each heartbeat and written to nodes.benchmark — the beginning of a
+    signal plane (utilization/temperature/power as first-class data, the way
+    InferMesh treats them; see COMPETITIVE_INTEL.md §3). Injectable output
+    for offline tests, same contract as detect_gpus.
+    """
+    if nvidia_smi_output is None:
+        try:
+            nvidia_smi_output = subprocess.run(
+                ["nvidia-smi",
+                 "--query-gpu=index,utilization.gpu,temperature.gpu,power.draw,"
+                 "memory.used,memory.total",
+                 "--format=csv,noheader,nounits"],
+                capture_output=True, text=True, timeout=15,
+            ).stdout
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            return []
+
+    out: List[Dict[str, Any]] = []
+    for line in nvidia_smi_output.strip().splitlines():
+        parts = [p.strip() for p in line.split(",")]
+        if len(parts) < 6:
+            continue
+        try:
+            out.append({
+                "gpu": int(parts[0]),
+                "util_pct": float(parts[1]),
+                "temp_c": float(parts[2]),
+                "power_w": float(parts[3]),
+                "vram_used_gb": round(float(parts[4]) / 1024, 1),
+                "vram_total_gb": round(float(parts[5]) / 1024, 1),
+            })
+        except ValueError:
+            continue
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Minimal Supabase REST client (auth + the few calls the agent needs)
 # ---------------------------------------------------------------------------
@@ -149,11 +188,13 @@ class SupabaseAgent:
         r.raise_for_status()
         return r.json()[0]["id"]
 
-    def heartbeat(self, node_id: str) -> None:
+    def heartbeat(self, node_id: str,
+                  telemetry: Optional[List[Dict[str, Any]]] = None) -> None:
+        payload: Dict[str, Any] = {"last_heartbeat": _now_iso(), "status": "online"}
+        if telemetry is not None:
+            payload["benchmark"] = {"telemetry": telemetry, "sampled_at": _now_iso()}
         r = requests.patch(f"{self.base}/rest/v1/nodes?id=eq.{node_id}",
-                           headers=self._headers(),
-                           json={"last_heartbeat": _now_iso(),
-                                 "status": "online"}, timeout=15)
+                           headers=self._headers(), json=payload, timeout=15)
         r.raise_for_status()
 
     def pending_assignments(self, node_id: str) -> List[Dict[str, Any]]:
@@ -243,7 +284,7 @@ def main() -> int:
 
     while running:
         try:
-            sb.heartbeat(node_id)
+            sb.heartbeat(node_id, telemetry=sample_telemetry())
             for a in sb.pending_assignments(node_id):
                 print(f"→ pending job {a['id'][:8]} (image {a['image']})")
                 sb.update_assignment(a["id"], {"status": "running",

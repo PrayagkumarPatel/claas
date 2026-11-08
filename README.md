@@ -109,7 +109,7 @@ curl -s localhost:8000/history?limit=5
 
 | File | Role |
 |---|---|
-| `engine.py` | CLOB: Pydantic `Ask`/`Bid`/`Trade`, heap-based matching, partial fills, spot price, order-status tracking, optional Supabase mirror (orders + fills persisted to Postgres; matching stays in memory) |
+| `engine.py` | CLOB: Pydantic `Ask`/`Bid`/`Trade`, heap-based matching, partial fills, spot price, order-status tracking, optional Supabase mirror with **outbox buffering** (DB outages delay mirroring, never lose events) + **idempotency keys** (`client_order_id` — duplicate submits return the original order) |
 | `api.py` | FastAPI routing layer + static web app + simulator lifecycle |
 | `simulators.py` | Asyncio bots: 9 providers quoting every 2–5s; 8 startups on a time-of-day demand curve |
 | `static/index.html` `styles.css` `app.js` | The web frontend — vanilla HTML/CSS/JS, no build step, no CDNs. v3 "commodity desk" terminal: monospace data, hairline rules, zero gradients/radius/shadows |
@@ -118,7 +118,8 @@ curl -s localhost:8000/history?limit=5
 | `ROADMAP.md` | Strategy: architecture, phase gates with exit criteria, unit economics, security & legal checklists, risk register |
 | `db/migrations/001_core_schema.sql` | Production schema (profiles, wallets+ledger, nodes, orders, trades, assignments) with full RLS — for a fresh Supabase project |
 | `agent/claas_agent.py` | Supplier node agent v0 — GPU detection, register, heartbeat, job listener (execution deliberately not implemented; see ROADMAP §6) |
-| `tests/` | Engine regression suite (pytest): UUID ids, partial fills, maker pricing, price-time priority, prune eviction, sink failure isolation, DB restore. Run from repo root: `python -m pytest tests/ -v` |
+| `amm.py` | AMM liquidity-backstop pool (constant-product, fee, quotes both directions) — the empty-book cold-start fix. **Experiment, not wired into the engine yet** (see module docstring + COMPETITIVE_INTEL.md) |
+| `tests/` | Engine regression suite (pytest): UUID ids, partial fills, maker pricing, price-time priority, prune eviction, sink failure isolation + outbox, idempotency keys, DB restore, AMM pool math. Run from repo root: `python -m pytest tests/ -v` |
 
 ## Environment knobs
 

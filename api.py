@@ -75,8 +75,9 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Start (and gracefully stop) the market simulator bots."""
+    """Start (and gracefully stop) the market simulator bots + mirror upkeep."""
     sim_task: Optional["asyncio.Future"] = None
+    flush_task: Optional["asyncio.Future"] = None
     if RUN_SIMULATORS:
         log.info("Booting market simulators (node providers + AI startups)...")
         sim_task = asyncio.gather(
@@ -86,16 +87,32 @@ async def lifespan(app: FastAPI):
     else:
         log.info("RUN_SIMULATORS=0 -> empty book, manual orders only.")
     log.info("Supabase mirror: %s", "ON" if book.persistence_active else "off (in-memory only)")
+
+    if book.persistence_active:
+        sink = make_sink_from_env()   # cached — same instance the book holds
+        async def _flush_loop():
+            """Retry outbox-buffered mirror writes every 30s (DB outage recovery)."""
+            while True:
+                await asyncio.sleep(30)
+                try:
+                    sink.flush_outbox()
+                except Exception as exc:  # noqa: BLE001 — upkeep must never crash the app
+                    log.debug("Mirror flush pass failed: %s", exc)
+        flush_task = asyncio.ensure_future(_flush_loop())
+
     try:
         yield
     finally:
-        if sim_task is not None:
-            sim_task.cancel()
-            try:
-                await sim_task
-            except asyncio.CancelledError:
-                pass
-            log.info("Simulators stopped.")
+        for task in (sim_task, flush_task):
+            if task is not None:
+                task.cancel()
+        for task in (sim_task, flush_task):
+            if task is not None:
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+        log.info("Simulators stopped.")
 
 
 app = FastAPI(
@@ -132,6 +149,9 @@ class AskIn(BaseModel):
                           description="GPU tier, e.g. 'RTX 4090', 'A100 80GB', 'H100 SXM'.")
     price: float = Field(gt=0, description="Limit price, USD per GPU-hour.")
     quantity: int = Field(gt=0, description="GPU-hours on offer.")
+    client_order_id: Optional[str] = Field(default=None, max_length=64,
+        description="Idempotency key — resubmitting the same id returns the original "
+                    "order instead of creating (and matching) a new one.")
 
 
 class BidIn(BaseModel):
@@ -141,6 +161,9 @@ class BidIn(BaseModel):
                          description="Startup / desk name.")
     price: float = Field(gt=0, description="Limit price, USD per GPU-hour.")
     quantity: int = Field(gt=0, description="GPU-hours requested.")
+    client_order_id: Optional[str] = Field(default=None, max_length=64,
+        description="Idempotency key — resubmitting the same id returns the original "
+                    "order instead of creating (and matching) a new one.")
 
 
 def _result(remaining: int, trades: List[Trade]) -> str:
@@ -185,7 +208,13 @@ async def submit_ask(payload: AskIn) -> Dict[str, Any]:
     against them immediately — with partial fills — and any unmatched
     remainder rests on the book.
     """
-    ask = new_ask(payload.provider, payload.hardware, payload.price, payload.quantity)
+    dup = book.check_duplicate(payload.client_order_id)
+    if dup is not None:
+        return {"result": "duplicate", "order_id": dup,
+                "order": book.order_status(dup),
+                "note": "client_order_id already used — no new order created"}
+    ask = new_ask(payload.provider, payload.hardware, payload.price, payload.quantity,
+                  client_id=payload.client_order_id)
     trades = book.submit_ask(ask)
     return {
         "result": _result(ask.quantity, trades),
@@ -203,7 +232,13 @@ async def submit_bid(payload: BidIn) -> Dict[str, Any]:
     against them immediately — with partial fills — and any unmatched
     remainder rests on the book.
     """
-    bid = new_bid(payload.startup, payload.price, payload.quantity)
+    dup = book.check_duplicate(payload.client_order_id)
+    if dup is not None:
+        return {"result": "duplicate", "order_id": dup,
+                "order": book.order_status(dup),
+                "note": "client_order_id already used — no new order created"}
+    bid = new_bid(payload.startup, payload.price, payload.quantity,
+                  client_id=payload.client_order_id)
     trades = book.submit_bid(bid)
     return {
         "result": _result(bid.quantity, trades),

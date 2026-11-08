@@ -259,3 +259,14 @@ Then ask me for whichever piece you want built next — my votes, in order:
 **(a)** Phase 2 agent v1 with the hardened runner, **(b)** terminal login +
 JWT-bound order entry, **(c)** the allocation loop. Sleep well; the exchange
 will still be matching when you wake up. 🌙
+
+---
+
+## §11 — Competitive intel addendum (Nov 2026)
+
+Repo teardowns + landscape sweep live in **COMPETITIVE_INTEL.md**. Adoptions already
+reflected in phase thinking: AMM liquidity floor for cold start (Phase 2–3 experiment),
+outbox-pattern mirror + idempotency keys (engine hardening), NVML telemetry +
+quarantine + external prober (agent v1), benchmark-certified hardware tiers (Phase 2).
+Graveyard rule reaffirmed: never build listings-first, never crypto-friction,
+never Phase 3 before Phase 1 earns it.

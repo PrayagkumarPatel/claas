@@ -269,3 +269,112 @@ def test_restore_rebuilds_book_without_rematching(monkeypatch):
     assert st["status"] == "partially_filled"
     assert st["filled_quantity"] == 30
     assert st["avg_fill_price"] == 2.20
+
+
+# ---------------------------------------------------------------------------
+# Idempotency keys (open-compute-system adoption) + mirror outbox
+# ---------------------------------------------------------------------------
+
+def test_client_id_idempotency():
+    book = OrderBook()
+    bid1 = new_bid("Aurora", 2.50, 100, client_id="web-abc-123")
+    fills1 = book.submit_bid(bid1)              # rests at 2.50
+    assert fills1 == []
+    assert book.snapshot()["bid_count"] == 1
+    assert book.check_duplicate("web-abc-123") == bid1.order_id
+    assert book.check_duplicate("never-seen") is None
+    assert book.check_duplicate(None) is None
+
+    # same client_id, wildly different order -> silently dropped
+    bid2 = new_bid("Aurora", 9.99, 500, client_id="web-abc-123")
+    assert book.submit_bid(bid2) == []
+    snap = book.snapshot()
+    assert snap["bid_count"] == 1               # nothing new rested
+    assert snap["bids"][0]["price"] == 2.50     # original order intact
+
+
+def test_idempotency_survives_matching():
+    """A duplicate of an order that already FILLED must not double-fill."""
+    book = OrderBook()
+    book.submit_ask(new_ask("Nebula", "H100", 2.00, 50))
+    bid = new_bid("Aurora", 2.50, 50, client_id="retry-me")
+    fills = book.submit_bid(bid)
+    assert len(fills) == 1 and book.spot_price == 2.00
+
+    dup = new_bid("Aurora", 2.50, 50, client_id="retry-me")
+    assert book.submit_bid(dup) == []           # no second fill, no double print
+    assert book.total_trades == 1
+
+
+# -- SupabaseSink outbox (tested without network via __new__) --------------
+
+from collections import deque
+
+from engine import SupabaseSink
+
+
+def _bare_sink():
+    """A SupabaseSink with only the outbox machinery initialized (no client)."""
+    s = SupabaseSink.__new__(SupabaseSink)
+    s.enabled = True
+    s._consecutive_failures = 0
+    s._outbox = deque(maxlen=500)
+    return s
+
+
+def test_outbox_buffers_and_drains_in_order():
+    sink = _bare_sink()
+    done = []
+    fails = {"n": 1}
+
+    def ok(tag):
+        def w():
+            done.append(tag)
+        return w
+
+    def flaky():
+        if fails["n"]:
+            fails["n"] -= 1
+            raise RuntimeError("db down")
+        done.append("b")
+
+    sink._run("a", ok("a"))
+    assert done == ["a"] and sink.outbox_depth == 0
+
+    sink._run("b", flaky)                       # fails once -> buffered, not lost
+    assert sink.outbox_depth == 1 and sink.enabled and done == ["a"]
+
+    # the NEXT event retries b (now recovered) and then flushes c — in order
+    sink._run("c", ok("c"))
+    assert done == ["a", "b", "c"] and sink.outbox_depth == 0
+
+    # a hard failure blocks everything queued behind it (strict FIFO)
+    def still_down():
+        raise RuntimeError("still down")
+
+    sink._run("d", still_down)
+    sink._run("e", ok("e"))                     # cannot jump the queue
+    assert done == ["a", "b", "c"]
+    assert sink.outbox_depth == 2
+
+
+def test_outbox_disables_then_reenables_via_flush():
+    sink = _bare_sink()
+
+    def always_fails():
+        raise RuntimeError("db down")
+
+    for i in range(5):
+        sink._run(f"w{i}", always_fails)
+    assert sink.enabled is False                # 5 failed drains -> disabled
+    assert sink.outbox_depth == 5               # ...but events survived
+
+    sink._run("w5", always_fails)               # buffered even while disabled
+    assert sink.outbox_depth == 6
+
+    # DB recovers: flush drains everything and re-enables the sink
+    calls = []
+    sink._outbox.clear()
+    sink._outbox.append(("recovered", lambda: calls.append(1)))
+    assert sink.flush_outbox() == 1
+    assert sink.enabled is True and calls == [1]

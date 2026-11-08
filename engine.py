@@ -89,6 +89,7 @@ class Ask(BaseModel):
     """Sell-side liquidity: a node provider offering GPU compute."""
 
     order_id: str = Field(description="UUID shared by memory + Postgres.")
+    client_id: Optional[str] = Field(default=None, description="Idempotency key from the client; duplicate submits are ignored.")
     provider: str = Field(description="Provider / desk name.")
     hardware: str = Field(default="H100", description="GPU tier on offer.")
     price: float = Field(gt=0, description="Limit price, USD per GPU-hour.")
@@ -105,6 +106,7 @@ class Bid(BaseModel):
     """Buy-side demand: an AI startup requesting GPU compute."""
 
     order_id: str = Field(description="UUID shared by memory + Postgres.")
+    client_id: Optional[str] = Field(default=None, description="Idempotency key from the client; duplicate submits are ignored.")
     startup: str = Field(description="Startup / desk name.")
     price: float = Field(gt=0, description="Limit price, USD per GPU-hour.")
     quantity: int = Field(ge=0, description="Unfilled GPU-hours (shrinks as the order fills).")
@@ -140,10 +142,12 @@ def _uid() -> str:
     return str(uuid.uuid4())
 
 
-def new_ask(provider: str, hardware: str, price: float, quantity: int) -> Ask:
+def new_ask(provider: str, hardware: str, price: float, quantity: int,
+            client_id: Optional[str] = None) -> Ask:
     """Build a validated Ask with id + timestamp. Prices are rounded to cents."""
     return Ask(
         order_id=_uid(),
+        client_id=client_id,
         provider=provider,
         hardware=hardware,
         price=round(float(price), 2),
@@ -153,10 +157,12 @@ def new_ask(provider: str, hardware: str, price: float, quantity: int) -> Ask:
     )
 
 
-def new_bid(startup: str, price: float, quantity: int) -> Bid:
+def new_bid(startup: str, price: float, quantity: int,
+            client_id: Optional[str] = None) -> Bid:
     """Build a validated Bid with id + timestamp. Prices are rounded to cents."""
     return Bid(
         order_id=_uid(),
+        client_id=client_id,
         startup=startup,
         price=round(float(price), 2),
         quantity=int(quantity),
@@ -189,6 +195,7 @@ class SupabaseSink:
         self.client: Any = create_client(url, key)
         self.enabled = True
         self._consecutive_failures = 0
+        self._outbox: Deque = deque(maxlen=500)   # bounded retry buffer
         self.orders_columns: set = set()
         self.trades_columns: set = set()
         self._probe_columns("orders",
@@ -213,28 +220,71 @@ class SupabaseSink:
                 pass
         setattr(self, f"{table}_columns", found)
 
-    def _ok(self) -> None:
-        self._consecutive_failures = 0
-
-    def _failed(self, what: str, exc: Exception) -> None:
-        self._consecutive_failures += 1
-        logger.warning("Supabase mirror: %s failed (%s) — %d/%d",
-                       what, exc, self._consecutive_failures, self.MAX_CONSECUTIVE_FAILURES)
-        if self._consecutive_failures >= self.MAX_CONSECUTIVE_FAILURES:
-            self.enabled = False
-            logger.error("Supabase mirror DISABLED after %d consecutive failures — "
-                         "engine continues in memory-only mode. Check credentials/RLS.",
-                         self._consecutive_failures)
-
     def _run(self, what: str, fn) -> None:
-        """Execute a write, swallowing + counting failures."""
+        """
+        Queue a write and drive the outbox (open-compute-system pattern).
+
+        Writes execute strictly in the order they were generated; a failing
+        write stays buffered (bounded) and is retried by the next event or by
+        flush_outbox(). A DB outage therefore DELAYS mirroring instead of
+        losing events. The sink still disables itself after MAX consecutive
+        failed drains to keep logs readable — buffered events survive, and
+        flush_outbox() re-enables it once the DB answers again.
+        """
         if not self.enabled:
+            self._outbox.append((what, fn))
             return
-        try:
-            fn()
-            self._ok()
-        except Exception as exc:  # noqa: BLE001 — deliberately broad
-            self._failed(what, exc)
+        self._outbox.append((what, fn))
+        self._drain_outbox()
+        if self._outbox:
+            self._consecutive_failures += 1
+            logger.warning("Supabase mirror: '%s' not delivered — %d write(s) buffered "
+                           "(failed drains %d/%d)",
+                           what, len(self._outbox), self._consecutive_failures,
+                           self.MAX_CONSECUTIVE_FAILURES)
+            if self._consecutive_failures >= self.MAX_CONSECUTIVE_FAILURES:
+                self.enabled = False
+                logger.error("Supabase mirror DISABLED after %d consecutive failed "
+                             "drains — engine continues in memory; %d write(s) stay "
+                             "buffered and will flush when the DB recovers.",
+                             self._consecutive_failures, len(self._outbox))
+        else:
+            self._consecutive_failures = 0
+
+    def _drain_outbox(self) -> int:
+        """Retry buffered writes in FIFO order; stop at the first failure."""
+        drained = 0
+        while self._outbox:
+            _what, fn = self._outbox[0]
+            try:
+                fn()
+            except Exception:  # noqa: BLE001 — a bad write must never crash the engine
+                break
+            self._outbox.popleft()
+            drained += 1
+        if drained:
+            logger.info("Supabase mirror: outbox drained %d buffered write(s).", drained)
+        return drained
+
+    def flush_outbox(self) -> int:
+        """
+        Explicit retry (api.py runs this every 30s): attempt a drain,
+        re-enabling the sink if it had disabled itself. Returns writes flushed.
+        """
+        if not self._outbox:
+            return 0
+        was_disabled = not self.enabled
+        self.enabled = True
+        self._consecutive_failures = 0
+        n = self._drain_outbox()
+        if was_disabled and self._outbox:
+            self.enabled = False  # DB still down — go back to sleep quietly
+        return n
+
+    @property
+    def outbox_depth(self) -> int:
+        """Writes buffered awaiting retry (observability)."""
+        return len(self._outbox)
 
     # -- events ---------------------------------------------------------------
 
@@ -487,6 +537,10 @@ class OrderBook:
         self._fills_by_order: Dict[str, List[Trade]] = {}
         self._order_ids: Deque[str] = deque()
 
+        # Idempotency: client-generated key -> order id (double-submits are
+        # silently dropped; api.py surfaces them as result='duplicate').
+        self._client_ids: Dict[str, str] = {}
+
         # Session statistics / spot price tracking.
         self._last_trade_price: Optional[float] = None
         self._prev_trade_price: Optional[float] = None
@@ -540,6 +594,8 @@ class OrderBook:
         rests on the book. Every event is mirrored to Supabase.
         """
         with self._lock:
+            if not self._admit(ask):
+                return []                      # duplicate client_id — already processed
             fills: List[Trade] = []
             self._track(ask)
             if self._sink is not None:
@@ -567,6 +623,8 @@ class OrderBook:
         rests on the book. Every event is mirrored to Supabase.
         """
         with self._lock:
+            if not self._admit(bid):
+                return []                      # duplicate client_id — already processed
             fills: List[Trade] = []
             self._track(bid)
             if self._sink is not None:
@@ -704,6 +762,26 @@ class OrderBook:
                 heapq.heappush(self._bids, (-order.price, order.timestamp, order.order_id, order))
                 self._track(order)
         return len(self._asks) + len(self._bids)
+
+    def _admit(self, order: Union[Ask, Bid]) -> bool:
+        """Idempotency guard: False means this client_id was already submitted."""
+        cid = order.client_id
+        if not cid:
+            return True
+        if cid in self._client_ids:
+            logger.warning("Duplicate submit ignored (client_id=%s -> order %s)",
+                           cid, self._client_ids[cid])
+            return False
+        self._client_ids[cid] = order.order_id
+        while len(self._client_ids) > 2000:
+            self._client_ids.pop(next(iter(self._client_ids)))
+        return True
+
+    def check_duplicate(self, client_id: Optional[str]) -> Optional[str]:
+        """If this client-generated id was used before, return its order id."""
+        if not client_id:
+            return None
+        return self._client_ids.get(client_id)
 
     def _track(self, order: Union[Ask, Bid]) -> None:
         """Index an order (and its future fills) for status lookups."""
