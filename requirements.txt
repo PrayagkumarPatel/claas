@@ -17,3 +17,6 @@ streamlit>=1.37        # >=1.37 required for st.fragment (1s auto-refresh)
 requests>=2.31
 pandas>=2.1
 plotly>=5.19
+
+# --- Dev: engine regression suite (run: python -m pytest tests/ -v) ---
+pytest>=8.0

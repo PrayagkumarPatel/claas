@@ -118,6 +118,7 @@ curl -s localhost:8000/history?limit=5
 | `ROADMAP.md` | Strategy: architecture, phase gates with exit criteria, unit economics, security & legal checklists, risk register |
 | `db/migrations/001_core_schema.sql` | Production schema (profiles, wallets+ledger, nodes, orders, trades, assignments) with full RLS — for a fresh Supabase project |
 | `agent/claas_agent.py` | Supplier node agent v0 — GPU detection, register, heartbeat, job listener (execution deliberately not implemented; see ROADMAP §6) |
+| `tests/` | Engine regression suite (pytest): UUID ids, partial fills, maker pricing, price-time priority, prune eviction, sink failure isolation, DB restore. Run from repo root: `python -m pytest tests/ -v` |
 
 ## Environment knobs
 
